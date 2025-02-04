@@ -13,15 +13,38 @@ paths:
       operationId: listDevices
       tags:
         - Devices
+      parameters:
+        - name: id
+          in: query
+          description: filter device by ID (optional)
+          required: false
+          schema:
+            type: string
+        - name: brand
+          in: query
+          description: filter devices by brand (optional)
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: filter devices by state (optional)
+          required: false
+          schema:
+            type: string
       responses:
         '200':
-          description: A list of devices
+          description: A list of devices or single device
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Device'
+                oneOf:
+                  - type: array
+                    items:
+                      $ref: '#/components/schemas/Device'
+                  - $ref: '#/components/schemas/Device'
+        '404':
+          description: Device not found
     post:
       summary: Create a new device
       operationId: createDevice
@@ -42,27 +65,7 @@ paths:
                 $ref: '#/components/schemas/Device'
         '400':
           description: Invalid input
-  /devices/{id}:
-    get:
-      summary: Get a device by ID
-      operationId: getDevice
-      tags:
-        - Devices
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Device details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Device'
-        '404':
-          description: Device not found
+
     put:
       summary: Update a device by ID
       operationId: updateDevice
@@ -70,7 +73,7 @@ paths:
         - Devices
       parameters:
         - name: id
-          in: path
+          in: query
           required: true
           schema:
             type: string
@@ -89,6 +92,48 @@ paths:
                 $ref: '#/components/schemas/Device'
         '404':
           description: Device not found
+
+    patch:
+      summary: Partial update device by ID
+      operationId: patchDevice
+      tags:
+        - Devices
+      parameters:
+        - name: id
+          in: query
+          description: Device ID that will be updated
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: New device name value
+          required: false
+          schema:
+            type: string
+        - name: brand
+          in: query
+          description: New device brand value
+          required: false
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: New device state value
+          required: false
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Device updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+        '404':
+          description: Device not found
+
     delete:
       summary: Delete a device by ID
       operationId: deleteDevice
@@ -96,7 +141,7 @@ paths:
         - Devices
       parameters:
         - name: id
-          in: path
+          in: query
           required: true
           schema:
             type: string
