@@ -126,3 +126,4 @@ components:
           type: string
           format: date-time
           example: "2024-02-2025T12:00:00Z"
+          readOnly: True
