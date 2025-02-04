@@ -2,7 +2,9 @@ name: CI
 
 on:
   pull_request:
-    branches: [ dev, master ]
+    branches:
+      - dev
+      - master
 
 jobs:
   enforce-branch-model:
