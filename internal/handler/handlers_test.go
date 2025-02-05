@@ -100,3 +100,27 @@ func TestSearchMultDevices(t *testing.T) {
 		assert.Equal(t, tc.expectedPayload, response)
 	}
 }
+
+func TestDeleteDevice(t *testing.T) {
+	tt := []struct {
+		name           string
+		queryParameter string
+		queryValue     string
+		expectedCode   int
+	}{
+		{"Delete successful", "id", "123", http.StatusNoContent},
+		{"Device not found", "id", "124", http.StatusNotFound},
+	}
+	for _, tc := range tt {
+		h := NewHandler()
+		rawBody, _ := json.Marshal(resources.Device{ID: "123", Brand: "xPhone", State: "available"})
+		req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/devices", bytes.NewReader(rawBody))
+		h.RegisterDevice(httptest.NewRecorder(), req)
+
+		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?%s=%s", tc.queryParameter, tc.queryValue)
+		req, _ = http.NewRequest(http.MethodDelete, url, nil)
+		rr := httptest.NewRecorder()
+		h.DeleteDevice(rr, req)
+		assert.Equal(t, tc.expectedCode, rr.Code)
+	}
+}
