@@ -40,14 +40,18 @@ func TestSearchSingleDevice(t *testing.T) {
 		expectedCode    int
 		expectedPayload any
 	}{
-		{"Search ID", "id", "123", http.StatusOK, resources.Device{}},
+		{"Search ID", "id", "123", http.StatusOK, resources.Device{ID: "123", Brand: "xPhone", State: "available"}},
 		{"Device not found", "id", "124", http.StatusNotFound, resources.Device{}},
 	}
 	for _, tc := range tt {
 		h := NewHandler()
-		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?%s=%s", tc.queryParameter, tc.queryValue)
-		req, _ := http.NewRequest(http.MethodGet, url, nil)
+		rawBody, _ := json.Marshal(resources.Device{ID: "123", Brand: "xPhone", State: "available"})
+		req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/devices", bytes.NewReader(rawBody))
+		h.RegisterDevice(httptest.NewRecorder(), req)
+
 		rr := httptest.NewRecorder()
+		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?%s=%s", tc.queryParameter, tc.queryValue)
+		req, _ = http.NewRequest(http.MethodGet, url, nil)
 		h.SearchDevice(rr, req)
 		assert.Equal(t, tc.expectedCode, rr.Code)
 		var response resources.Device
@@ -64,15 +68,30 @@ func TestSearchMultDevices(t *testing.T) {
 		expectedCode    int
 		expectedPayload any
 	}{
-		{"Retrieve all devices", "", "", http.StatusOK, []resources.Device{}},
-		{"Fetch by brand", "brand", "xPhone", http.StatusOK, []resources.Device{}},
-		{"Fetch by state", "state", "available", http.StatusOK, []resources.Device{}},
-		{"Device not found", "brand", "Android", http.StatusNotFound, nil},
+		{"Retrieve all devices", "", "", http.StatusOK, []resources.Device{
+			{ID: "123", Brand: "xPhone", State: "available"},
+			{ID: "124", Brand: "Android", State: "available"}},
+		},
+		{"Fetch by brand", "brand", "xPhone", http.StatusOK, []resources.Device{
+			{ID: "123", Brand: "xPhone", State: "available"}}},
+		{"Fetch by state", "state", "available", http.StatusOK, []resources.Device{
+			{ID: "123", Brand: "xPhone", State: "available"},
+			{ID: "124", Brand: "Android", State: "available"}},
+		},
+		{"Device not found", "brand", "Android", http.StatusNotFound, []resources.Device{}},
+	}
+	devicesToRegister := []resources.Device{
+		{ID: "123", Brand: "xPhone", State: "available"},
+		{ID: "124", Brand: "Android", State: "available"},
 	}
 	for _, tc := range tt {
 		h := NewHandler()
+		rawBody, _ := json.Marshal(devicesToRegister)
+		req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/devices", bytes.NewReader(rawBody))
+		h.RegisterDevice(httptest.NewRecorder(), req)
+
 		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?%s=%s", tc.queryParameter, tc.queryValue)
-		req, _ := http.NewRequest(http.MethodGet, url, nil)
+		req, _ = http.NewRequest(http.MethodGet, url, nil)
 		rr := httptest.NewRecorder()
 		h.SearchDevice(rr, req)
 		assert.Equal(t, tc.expectedCode, rr.Code)
