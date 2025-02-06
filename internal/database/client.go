@@ -17,6 +17,7 @@ type Client interface {
 	FetchDevicesByState(state string) ([]resources.Device, error)
 	FetchDevicesByBrand(brand string) ([]resources.Device, error)
 	RemoveDevice(id int) error
+	UpdateDevice(currentValues resources.Device, newValues resources.Device) error
 }
 
 type sqliteClient struct {
@@ -101,4 +102,11 @@ func (c *sqliteClient) RemoveDevice(id int) error {
 		return constants.ErrorDeviceNotFound
 	}
 	return result.Error
+}
+
+func (c *sqliteClient) UpdateDevice(currentValues resources.Device, newValues resources.Device) error {
+	if err := c.db.Model(&currentValues).Updates(newValues).Error; err != nil {
+		return err
+	}
+	return nil
 }
