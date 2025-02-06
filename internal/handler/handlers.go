@@ -40,6 +40,9 @@ func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
+	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
