@@ -132,7 +132,7 @@ func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
-		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
