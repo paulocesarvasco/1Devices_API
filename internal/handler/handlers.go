@@ -33,12 +33,15 @@ func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		http.Error(w, "missed id parameter", http.StatusBadRequest)
+		return
 	}
 	err := h.service.RemoveDeviceByID(id)
 	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -48,10 +51,12 @@ func (h *handler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&requestPayload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	device, err := h.service.SaveDevice(requestPayload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(device)
@@ -67,8 +72,10 @@ func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if errors.Is(err, constants.ErrorDeviceNotFound) {
 				http.Error(w, err.Error(), http.StatusNotFound)
+				return
 			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(device)
@@ -80,6 +87,7 @@ func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusNotFound)
 			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(devices)
@@ -89,8 +97,10 @@ func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			if errors.Is(err, constants.ErrorStateNotFound) {
 				http.Error(w, err.Error(), http.StatusNotFound)
+				return
 			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(devices)
@@ -99,6 +109,7 @@ func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
 	devices, err := h.service.ListAllDevices()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(devices)
@@ -108,19 +119,24 @@ func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	if id == "" {
 		http.Error(w, constants.ErrorMissedRequestIDParameter.Error(), http.StatusBadRequest)
+		return
 	}
 	var newDeviceValues resources.Device
 	err := json.NewDecoder(r.Body).Decode(&newDeviceValues)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	err = h.service.UpdateDevice(id, newDeviceValues)
 	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+		return
 	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
