@@ -17,7 +17,7 @@ type Client interface {
 	FetchDevicesByState(state string) ([]resources.Device, error)
 	FetchDevicesByBrand(brand string) ([]resources.Device, error)
 	RemoveDevice(id int) error
-	UpdateDevice(id int, newValues resources.Device) error
+	UpdateDevice(currentValues resources.Device, newValues resources.Device) error
 }
 
 type sqliteClient struct {
@@ -104,15 +104,7 @@ func (c *sqliteClient) RemoveDevice(id int) error {
 	return result.Error
 }
 
-func (c *sqliteClient) UpdateDevice(id int, newValues resources.Device) error {
-	var currentValues resources.Device
-	if err := c.db.First(&currentValues, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return constants.ErrorDeviceNotFound
-		}
-		return err
-	}
-	newValues.CreationTime = currentValues.CreationTime
+func (c *sqliteClient) UpdateDevice(currentValues resources.Device, newValues resources.Device) error {
 	if err := c.db.Model(&currentValues).Updates(newValues).Error; err != nil {
 		return err
 	}

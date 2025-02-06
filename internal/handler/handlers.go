@@ -104,4 +104,23 @@ func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(devices)
 }
 
-func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {}
+func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, constants.ErrorMissedRequestIDParameter.Error(), http.StatusBadRequest)
+	}
+	var newDeviceValues resources.Device
+	err := json.NewDecoder(r.Body).Decode(&newDeviceValues)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	err = h.service.UpdateDevice(id, newDeviceValues)
+	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
+		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusOK)
+}
