@@ -3,7 +3,6 @@ package database
 import (
 	"1Devices_API/internal/resources"
 	"log"
-	"time"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -38,9 +37,8 @@ func (c *sqliteClient) InsertDevice(device resources.Device) (resources.Device, 
 	if tx.Error != nil {
 		return resources.Device{}, tx.Error
 	}
-	device.CreationTime = time.Now().Format(time.RFC3339)
 
-	if err := tx.Create(device).Error; err != nil {
+	if err := tx.Create(&device).Error; err != nil {
 		tx.Rollback()
 		return resources.Device{}, err
 	}
