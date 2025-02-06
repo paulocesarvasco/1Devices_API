@@ -1,7 +1,7 @@
 package resources
 
 type Device struct {
-	ID           string `json:"id,omitempty"`
+	ID           string `json:"id,omitempty" gorm:"primaryKey"`
 	Name         string `json:"name,omitempty"`
 	Brand        string `json:"brand,omitempty"`
 	State        string `json:"state,omitempty"`
