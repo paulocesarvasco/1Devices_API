@@ -45,6 +45,7 @@ func TestSearchSingleDevice(t *testing.T) {
 	}{
 		{"Search ID", "id", "1", http.StatusOK, resources.Device{ID: 1, Brand: "xPhone", State: "available", CreationTime: time.Now().Format(time.RFC3339)}},
 		{"Device not found", "id", "2", http.StatusNotFound, resources.Device{}},
+		{"Invalid ID", "id", "a", http.StatusInternalServerError, resources.Device{}},
 	}
 	for _, tc := range tt {
 		h := NewHandler(services.NewService(database.NewSQLiteClient()))
@@ -114,6 +115,7 @@ func TestDeleteDevice(t *testing.T) {
 	}{
 		{"Delete successful", "id", "1", http.StatusNoContent},
 		{"Device not found", "id", "2", http.StatusNotFound},
+		{"Invalid ID", "id", "a", http.StatusInternalServerError},
 	}
 	for _, tc := range tt {
 		h := NewHandler(services.NewService(database.NewSQLiteClient()))
@@ -147,6 +149,7 @@ func TestPutDevice(t *testing.T) {
 		{"Device in-use", "1", resources.Device{Name: "iPhone", State: "in-use"},
 			resources.Device{Name: "iPhone", State: "available"}, http.StatusUnauthorized,
 			resources.Device{}},
+		{"Invalid ID", "a", resources.Device{}, resources.Device{}, http.StatusInternalServerError, resources.Device{}},
 	}
 	for _, tc := range tt {
 		h := NewHandler(services.NewService(database.NewSQLiteClient()))
