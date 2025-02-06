@@ -14,6 +14,7 @@ type Handler interface {
 	RegisterDevice(w http.ResponseWriter, r *http.Request)
 	SearchDevice(w http.ResponseWriter, r *http.Request)
 	UpdateDevice(w http.ResponseWriter, r *http.Request)
+	HomePage(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(s services.Services) Handler {
@@ -22,6 +23,10 @@ func NewHandler(s services.Services) Handler {
 
 type handler struct {
 	service services.Services
+}
+
+func (h *handler) HomePage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./static/index.html")
 }
 
 func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {

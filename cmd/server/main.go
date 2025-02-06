@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"1Devices_API/internal/database"
