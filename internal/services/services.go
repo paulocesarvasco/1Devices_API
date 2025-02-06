@@ -107,7 +107,7 @@ func (s *service) PatchDevice(id, name, brand, state string) error {
 	if err != nil {
 		return err
 	}
-	if currentValues.State == "in-use" {
+	if (name != "" || brand != "") && currentValues.State == "in-use" {
 		return constants.ErrorDeviceInUse
 	}
 	newValues := currentValues
