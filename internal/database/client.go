@@ -1,7 +1,9 @@
 package database
 
 import (
+	"1Devices_API/internal/constants"
 	"1Devices_API/internal/resources"
+	"errors"
 	"log"
 
 	"gorm.io/driver/sqlite"
@@ -10,6 +12,7 @@ import (
 
 type Client interface {
 	InsertDevice(device resources.Device) (resources.Device, error)
+	SelectDevice(id int) (resources.Device, error)
 }
 
 type sqliteClient struct {
@@ -45,6 +48,18 @@ func (c *sqliteClient) InsertDevice(device resources.Device) (resources.Device, 
 	err := tx.Commit().Error
 	if err != nil {
 		return resources.Device{}, err
+	}
+	return device, nil
+}
+
+func (c *sqliteClient) SelectDevice(id int) (resources.Device, error) {
+	var device resources.Device
+	result := c.db.First(&device, id)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		return resources.Device{}, constants.ErrorDeviceNotFound
+	}
+	if result.Error != nil {
+		return resources.Device{}, result.Error
 	}
 	return device, nil
 }
