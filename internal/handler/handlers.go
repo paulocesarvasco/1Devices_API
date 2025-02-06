@@ -24,7 +24,19 @@ type handler struct {
 	service services.Services
 }
 
-func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {}
+func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "missed id parameter", http.StatusBadRequest)
+	}
+	err := h.service.RemoveDeviceByID(id)
+	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func (h *handler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	var requestPayload resources.Device

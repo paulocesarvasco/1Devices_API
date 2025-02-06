@@ -112,8 +112,8 @@ func TestDeleteDevice(t *testing.T) {
 		queryValue     string
 		expectedCode   int
 	}{
-		{"Delete successful", "id", "123", http.StatusNoContent},
-		{"Device not found", "id", "124", http.StatusNotFound},
+		{"Delete successful", "id", "1", http.StatusNoContent},
+		{"Device not found", "id", "2", http.StatusNotFound},
 	}
 	for _, tc := range tt {
 		h := NewHandler(services.NewService(database.NewSQLiteClient()))

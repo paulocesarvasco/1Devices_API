@@ -14,6 +14,7 @@ type Services interface {
 	ListAllDevices() ([]resources.Device, error)
 	FilterDevicesBrand(brand string) ([]resources.Device, error)
 	FilterDevicesState(state string) ([]resources.Device, error)
+	RemoveDeviceByID(id string) error
 }
 
 type service struct {
@@ -69,4 +70,12 @@ func (s *service) FilterDevicesState(state string) ([]resources.Device, error) {
 		return nil, constants.ErrorDeviceNotFound
 	}
 	return devices, nil
+}
+
+func (s *service) RemoveDeviceByID(id string) error {
+	idValue, err := strconv.Atoi(id)
+	if err != nil {
+		return constants.ErrorInvalidRequestParameter
+	}
+	return s.db.RemoveDevice(idValue)
 }
