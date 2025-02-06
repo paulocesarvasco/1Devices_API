@@ -16,6 +16,7 @@ type Services interface {
 	FilterDevicesState(state string) ([]resources.Device, error)
 	RemoveDeviceByID(id string) error
 	UpdateDevice(id string, newValues resources.Device) error
+	PatchDevice(id, name, brand, state string) error
 }
 
 type service struct {
@@ -94,5 +95,30 @@ func (s *service) UpdateDevice(id string, newValues resources.Device) error {
 		return constants.ErrorDeviceInUse
 	}
 	newValues.CreationTime = currentValues.CreationTime
+	return s.db.UpdateDevice(currentValues, newValues)
+}
+
+func (s *service) PatchDevice(id, name, brand, state string) error {
+	idValue, err := strconv.Atoi(id)
+	if err != nil {
+		return constants.ErrorInvalidRequestParameter
+	}
+	currentValues, err := s.db.SelectDevice(idValue)
+	if err != nil {
+		return err
+	}
+	if (name != "" || brand != "") && currentValues.State == "in-use" {
+		return constants.ErrorDeviceInUse
+	}
+	newValues := currentValues
+	if name != "" {
+		newValues.Name = name
+	}
+	if brand != "" {
+		newValues.Brand = brand
+	}
+	if state != "" {
+		newValues.State = state
+	}
 	return s.db.UpdateDevice(currentValues, newValues)
 }

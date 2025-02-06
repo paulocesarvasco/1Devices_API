@@ -152,23 +152,24 @@
             const brand = document.getElementById("brand").value;
             const state = document.getElementById("state").value;
 
-            const payload = { name, brand, state };
-
             try {
                 let response;
                 if (id) {
-                    // Update existing device (ID as query param)
-                    response = await fetch(`http://localhost:8080/api/v1/devices?id=${id}`, {
+                    // Update existing device using query parameters
+                    const url = new URL(`http://localhost:8080/api/v1/devices?id=${id}`);
+                    url.searchParams.append("name", name);
+                    url.searchParams.append("brand", brand);
+                    url.searchParams.append("state", state);
+
+                    response = await fetch(url, {
                         method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
                     });
                 } else {
-                    // Create new device
+                    // Create new device with a payload
                     response = await fetch("http://localhost:8080/api/v1/devices", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify({ name, brand, state }),
                     });
                 }
 

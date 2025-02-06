@@ -15,6 +15,7 @@ type Handler interface {
 	SearchDevice(w http.ResponseWriter, r *http.Request)
 	UpdateDevice(w http.ResponseWriter, r *http.Request)
 	HomePage(w http.ResponseWriter, r *http.Request)
+	PatchDevice(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(s services.Services) Handler {
@@ -128,6 +129,30 @@ func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = h.service.UpdateDevice(id, newDeviceValues)
+	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handler) PatchDevice(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, constants.ErrorMissedRequestIDParameter.Error(), http.StatusBadRequest)
+		return
+	}
+	queryParameters := r.URL.Query()
+	name := queryParameters.Get("name")
+	brand := queryParameters.Get("brand")
+	state := queryParameters.Get("state")
+	err := h.service.PatchDevice(id, name, brand, state)
 	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return

@@ -173,3 +173,49 @@ func TestPutDevice(t *testing.T) {
 		}
 	}
 }
+
+func TestPatchDevice(t *testing.T) {
+	tt := []struct {
+		name           string
+		deviceID       string
+		deviceToSave   resources.Device
+		patchParameter []string
+		patchValue     []string
+		expectedCode   int
+		expectedDevice resources.Device
+	}{
+		{
+			"Update brand", "1", resources.Device{Brand: "Apple"},
+			[]string{"brand"}, []string{"Samsung"}, http.StatusOK,
+			resources.Device{ID: 1, Brand: "Samsung", CreationTime: time.Now().Format(time.RFC3339)},
+		},
+		{
+			"Update blocked", "1", resources.Device{Name: "foo", Brand: "Apple", State: "in-use"},
+			[]string{"brand"}, []string{"Samsung"}, http.StatusUnauthorized,
+			resources.Device{ID: 1, Name: "foo", Brand: "Apple", State: "in-use", CreationTime: time.Now().Format(time.RFC3339)},
+		},
+	}
+
+	for _, tc := range tt {
+		h := NewHandler(services.NewService(database.NewSQLiteClient()))
+		rawBody, _ := json.Marshal(tc.deviceToSave)
+		req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/devices", bytes.NewReader(rawBody))
+		h.RegisterDevice(httptest.NewRecorder(), req)
+
+		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?id=%s", tc.deviceID)
+		for i := range tc.patchParameter {
+			url += "&" + tc.patchParameter[i] + "=" + tc.patchValue[i]
+		}
+		req, _ = http.NewRequest(http.MethodPatch, url, nil)
+		rr := httptest.NewRecorder()
+
+		h.PatchDevice(rr, req)
+		assert.Equal(t, tc.expectedCode, rr.Code, tc.name)
+
+		rr = httptest.NewRecorder()
+		h.SearchDevice(rr, req)
+		var device resources.Device
+		json.NewDecoder(rr.Body).Decode(&device)
+		assert.Equal(t, tc.expectedDevice, device, tc.name)
+	}
+}
