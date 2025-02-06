@@ -11,6 +11,7 @@ import (
 type Services interface {
 	SaveDevice(device resources.Device) (resources.Device, error)
 	SearchDeviceByID(id string) (resources.Device, error)
+	ListAllDevices() ([]resources.Device, error)
 }
 
 type service struct {
@@ -40,4 +41,8 @@ func (s *service) SearchDeviceByID(id string) (resources.Device, error) {
 		return resources.Device{}, err
 	}
 	return device, nil
+}
+
+func (s *service) ListAllDevices() ([]resources.Device, error) {
+	return s.db.FetchAllDevices()
 }

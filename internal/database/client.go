@@ -13,6 +13,7 @@ import (
 type Client interface {
 	InsertDevice(device resources.Device) (resources.Device, error)
 	SelectDevice(id int) (resources.Device, error)
+	FetchAllDevices() ([]resources.Device, error)
 }
 
 type sqliteClient struct {
@@ -62,4 +63,13 @@ func (c *sqliteClient) SelectDevice(id int) (resources.Device, error) {
 		return resources.Device{}, result.Error
 	}
 	return device, nil
+}
+
+func (c *sqliteClient) FetchAllDevices() ([]resources.Device, error) {
+	var devices []resources.Device
+	result := c.db.Find(&devices)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return devices, nil
 }
