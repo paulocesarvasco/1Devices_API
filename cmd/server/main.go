@@ -1,8 +1,10 @@
 package server
 
 import (
+	"1Devices_API/internal/database"
 	"1Devices_API/internal/handler"
 	"1Devices_API/internal/router"
+	"1Devices_API/internal/services"
 	"log"
 	"net/http"
 	"os"
@@ -22,7 +24,9 @@ func main() {
 		os.Exit(0)
 	}(c)
 
-	handlers := handler.NewHandler()
+	db := database.NewSQLiteClient()
+	services := services.NewService(db)
+	handlers := handler.NewHandler(services)
 	r := chi.NewMux()
 	router.SetRoutes(r, handlers)
 	http.ListenAndServe("localhost:8080", r)

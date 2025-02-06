@@ -1,7 +1,7 @@
 package resources
 
 type Device struct {
-	ID           string `json:"id,omitempty"`
+	ID           int    `json:"id,omitempty" gorm:"primaryKey;autoIncrement"`
 	Name         string `json:"name,omitempty"`
 	Brand        string `json:"brand,omitempty"`
 	State        string `json:"state,omitempty"`

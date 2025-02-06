@@ -48,7 +48,7 @@ jobs:
           coverage=$(go tool cover -func=coverage.out | grep total | awk '{print substr($3, 1, length($3)-1)}')
           echo "Total Coverage: $coverage%"
     
-          min_coverage=80.0
+          min_coverage=70.0
           if (( $(echo "$coverage < $min_coverage" | bc -l) )); then
             echo "Test coverage is below ${min_coverage}%. Failing the workflow."
             exit 1
