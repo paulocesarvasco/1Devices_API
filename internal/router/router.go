@@ -13,6 +13,6 @@ func SetRoutes(r chi.Router, h handler.Handler) {
 		r.Post("/devices", h.RegisterDevice)
 		r.Delete("/devices", h.DeleteDevice)
 		r.Put("/devices", h.UpdateDevice)
-		r.Patch("/devices", h.UpdateDevice)
+		r.Patch("/devices", h.PatchDevice)
 	})
 }
