@@ -76,12 +76,12 @@ func TestSearchMultDevices(t *testing.T) {
 			{ID: 2, Brand: "Android", State: "available", CreationTime: time.Now().Format(time.RFC3339)}},
 		},
 		{"Fetch by brand", "brand", "xPhone", http.StatusOK, []resources.Device{
-			{ID: 1, Brand: "xPhone", State: "available"}}},
+			{ID: 1, Brand: "xPhone", State: "available", CreationTime: time.Now().Format(time.RFC3339)}}},
 		{"Fetch by state", "state", "available", http.StatusOK, []resources.Device{
-			{ID: 1, Brand: "xPhone", State: "available"},
-			{ID: 2, Brand: "Android", State: "available"}},
+			{ID: 1, Brand: "xPhone", State: "available", CreationTime: time.Now().Format(time.RFC3339)},
+			{ID: 2, Brand: "Android", State: "available", CreationTime: time.Now().Format(time.RFC3339)}},
 		},
-		{"Device not found", "brand", "Android", http.StatusNotFound, []resources.Device{}},
+		{"Device not found", "brand", "MotoX", http.StatusNotFound, []resources.Device{}},
 	}
 	devicesToRegister := []resources.Device{
 		{Brand: "xPhone", State: "available"},
@@ -94,12 +94,11 @@ func TestSearchMultDevices(t *testing.T) {
 			req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/devices", bytes.NewReader(rawBody))
 			h.RegisterDevice(httptest.NewRecorder(), req)
 		}
-
 		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?%s=%s", tc.queryParameter, tc.queryValue)
 		req, _ := http.NewRequest(http.MethodGet, url, nil)
 		rr := httptest.NewRecorder()
 		h.SearchDevice(rr, req)
-		var response []resources.Device
+		response := []resources.Device{}
 		json.Unmarshal(rr.Body.Bytes(), &response)
 		assert.Equal(t, tc.expectedCode, rr.Code)
 		assert.Equal(t, tc.expectedPayload, response, tc.name)

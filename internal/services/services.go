@@ -12,6 +12,8 @@ type Services interface {
 	SaveDevice(device resources.Device) (resources.Device, error)
 	SearchDeviceByID(id string) (resources.Device, error)
 	ListAllDevices() ([]resources.Device, error)
+	FilterDevicesBrand(brand string) ([]resources.Device, error)
+	FilterDevicesState(state string) ([]resources.Device, error)
 }
 
 type service struct {
@@ -45,4 +47,26 @@ func (s *service) SearchDeviceByID(id string) (resources.Device, error) {
 
 func (s *service) ListAllDevices() ([]resources.Device, error) {
 	return s.db.FetchAllDevices()
+}
+
+func (s *service) FilterDevicesBrand(brand string) ([]resources.Device, error) {
+	devices, err := s.db.FetchDevicesByBrand(brand)
+	if err != nil {
+		return nil, err
+	}
+	if len(devices) == 0 {
+		return nil, constants.ErrorBrandNotFound
+	}
+	return devices, nil
+}
+
+func (s *service) FilterDevicesState(state string) ([]resources.Device, error) {
+	devices, err := s.db.FetchDevicesByState(state)
+	if err != nil {
+		return nil, err
+	}
+	if len(devices) == 0 {
+		return nil, constants.ErrorDeviceNotFound
+	}
+	return devices, nil
 }

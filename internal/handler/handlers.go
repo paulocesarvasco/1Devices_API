@@ -41,25 +41,50 @@ func (h *handler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		devices, err := h.service.ListAllDevices()
+	queryParams := r.URL.Query()
+	id := queryParams.Get("id")
+	brand := queryParams.Get("brand")
+	state := queryParams.Get("state")
+	if id != "" {
+		device, err := h.service.SearchDeviceByID(id)
 		if err != nil {
+			if errors.Is(err, constants.ErrorDeviceNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(device)
+		return
+	} else if brand != "" {
+		devices, err := h.service.FilterDevicesBrand(brand)
+		if err != nil {
+			if errors.Is(err, constants.ErrorBrandNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(devices)
+		return
+	} else if state != "" {
+		devices, err := h.service.FilterDevicesState(state)
+		if err != nil {
+			if errors.Is(err, constants.ErrorStateNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(devices)
 		return
 	}
-	device, err := h.service.SearchDeviceByID(id)
+	devices, err := h.service.ListAllDevices()
 	if err != nil {
-		if errors.Is(err, constants.ErrorDeviceNotFound) {
-			http.Error(w, err.Error(), http.StatusNotFound)
-		}
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(device)
+	json.NewEncoder(w).Encode(devices)
 }
 
 func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {}

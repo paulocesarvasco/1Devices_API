@@ -14,6 +14,8 @@ type Client interface {
 	InsertDevice(device resources.Device) (resources.Device, error)
 	SelectDevice(id int) (resources.Device, error)
 	FetchAllDevices() ([]resources.Device, error)
+	FetchDevicesByState(state string) ([]resources.Device, error)
+	FetchDevicesByBrand(brand string) ([]resources.Device, error)
 }
 
 type sqliteClient struct {
@@ -68,6 +70,24 @@ func (c *sqliteClient) SelectDevice(id int) (resources.Device, error) {
 func (c *sqliteClient) FetchAllDevices() ([]resources.Device, error) {
 	var devices []resources.Device
 	result := c.db.Find(&devices)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return devices, nil
+}
+
+func (c *sqliteClient) FetchDevicesByBrand(brand string) ([]resources.Device, error) {
+	var devices []resources.Device
+	result := c.db.Where("brand = ?", brand).Find(&devices)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return devices, nil
+}
+
+func (c *sqliteClient) FetchDevicesByState(state string) ([]resources.Device, error) {
+	var devices []resources.Device
+	result := c.db.Where("state = ?", state).Find(&devices)
 	if result.Error != nil {
 		return nil, result.Error
 	}
