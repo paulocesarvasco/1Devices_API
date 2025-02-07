@@ -28,16 +28,7 @@ type dbClient struct {
 	db *gorm.DB
 }
 
-func (c *dbClient) RunMigrations() {
-	err := c.db.AutoMigrate(&resources.Device{})
-	if err != nil {
-		log.Fatalf("Migration failed: %v", err)
-	}
-	log.Println("Migration completed successfully!")
-}
-
 func NewPostgresClient() Client {
-	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
@@ -61,6 +52,14 @@ func NewSQLiteClient() Client {
 	db.AutoMigrate(&resources.Device{})
 
 	return &dbClient{db: db}
+}
+
+func (c *dbClient) RunMigrations() {
+	err := c.db.AutoMigrate(&resources.Device{})
+	if err != nil {
+		log.Fatalf("Migration failed: %v", err)
+	}
+	log.Println("Migration completed successfully!")
 }
 
 func (c *dbClient) InsertDevice(device resources.Device) (resources.Device, error) {
