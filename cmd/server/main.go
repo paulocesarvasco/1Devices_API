@@ -24,10 +24,13 @@ func main() {
 		os.Exit(0)
 	}(c)
 
-	db := database.NewSQLiteClient()
+	// db := database.NewSQLiteClient()
+	db := database.NewPostgresClient()
+	db.RunMigrations()
 	services := services.NewService(db)
 	handlers := handler.NewHandler(services)
 	r := chi.NewMux()
 	router.SetRoutes(r, handlers)
-	http.ListenAndServe("localhost:8080", r)
+	log.Println("server started")
+	http.ListenAndServe("0.0.0.0:8080", r)
 }
