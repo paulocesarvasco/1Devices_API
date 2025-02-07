@@ -17,7 +17,7 @@ type Client interface {
 	InsertDevice(device resources.Device) (resources.Device, error)
 	SelectDevice(id int) (resources.Device, error)
 	FetchAllDevices() ([]resources.Device, error)
-	FetchDevicesByState(state string) ([]resources.Device, error)
+	FetchDevicesByState(state resources.State) ([]resources.Device, error)
 	FetchDevicesByBrand(brand string) ([]resources.Device, error)
 	RemoveDevice(id int) error
 	UpdateDevice(currentValues resources.Device, newValues resources.Device) error
@@ -114,7 +114,7 @@ func (c *dbClient) FetchDevicesByBrand(brand string) ([]resources.Device, error)
 	return devices, nil
 }
 
-func (c *dbClient) FetchDevicesByState(state string) ([]resources.Device, error) {
+func (c *dbClient) FetchDevicesByState(state resources.State) ([]resources.Device, error) {
 	var devices []resources.Device
 	result := c.db.Where("state = ?", state).Find(&devices)
 	if result.Error != nil {
@@ -128,9 +128,6 @@ func (c *dbClient) RemoveDevice(id int) error {
 	result := c.db.Where("id = ?", id).First(&device)
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return constants.ErrorDeviceNotFound
-	}
-	if device.State == "in-use" {
-		return constants.ErrorDeviceInUse
 	}
 	deleteResult := c.db.Delete(&device)
 	if deleteResult.Error != nil {

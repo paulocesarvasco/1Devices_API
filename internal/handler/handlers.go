@@ -11,11 +11,11 @@ import (
 
 type Handler interface {
 	DeleteDevice(w http.ResponseWriter, r *http.Request)
+	HomePage(w http.ResponseWriter, r *http.Request)
+	PatchDevice(w http.ResponseWriter, r *http.Request)
 	RegisterDevice(w http.ResponseWriter, r *http.Request)
 	SearchDevice(w http.ResponseWriter, r *http.Request)
 	UpdateDevice(w http.ResponseWriter, r *http.Request)
-	HomePage(w http.ResponseWriter, r *http.Request)
-	PatchDevice(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(s services.Services) Handler {
@@ -24,10 +24,6 @@ func NewHandler(s services.Services) Handler {
 
 type handler struct {
 	service services.Services
-}
-
-func (h *handler) HomePage(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./static/index.html")
 }
 
 func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +46,34 @@ func (h *handler) DeleteDevice(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *handler) HomePage(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./static/index.html")
+}
+
+func (h *handler) PatchDevice(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, constants.ErrorMissedRequestIDParameter.Error(), http.StatusBadRequest)
+		return
+	}
+	queryParameters := r.URL.Query()
+	name := queryParameters.Get("name")
+	brand := queryParameters.Get("brand")
+	state := resources.State(queryParameters.Get("state"))
+	err := h.service.PatchDevice(id, name, brand, state)
+	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *handler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 	var requestPayload resources.Device
 	err := json.NewDecoder(r.Body).Decode(&requestPayload)
@@ -58,7 +82,10 @@ func (h *handler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	device, err := h.service.SaveDevice(requestPayload)
-	if err != nil {
+	if err != nil && errors.Is(err, constants.ErrorInvalidDeviceState) {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	} else if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -70,7 +97,7 @@ func (h *handler) SearchDevice(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	id := queryParams.Get("id")
 	brand := queryParams.Get("brand")
-	state := queryParams.Get("state")
+	state := resources.State(queryParams.Get("state"))
 	if id != "" {
 		device, err := h.service.SearchDeviceByID(id)
 		if err != nil {
@@ -132,30 +159,6 @@ func (h *handler) UpdateDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = h.service.UpdateDevice(id, newDeviceValues)
-	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
-		http.Error(w, err.Error(), http.StatusNotFound)
-		return
-	} else if err != nil && errors.Is(err, constants.ErrorDeviceInUse) {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	} else if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h *handler) PatchDevice(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, constants.ErrorMissedRequestIDParameter.Error(), http.StatusBadRequest)
-		return
-	}
-	queryParameters := r.URL.Query()
-	name := queryParameters.Get("name")
-	brand := queryParameters.Get("brand")
-	state := queryParameters.Get("state")
-	err := h.service.PatchDevice(id, name, brand, state)
 	if err != nil && errors.Is(err, constants.ErrorDeviceNotFound) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
