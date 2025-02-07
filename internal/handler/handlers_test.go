@@ -108,26 +108,27 @@ func TestSearchMultDevices(t *testing.T) {
 
 func TestDeleteDevice(t *testing.T) {
 	tt := []struct {
-		name           string
-		queryParameter string
-		queryValue     string
-		expectedCode   int
+		name         string
+		deviceID     string
+		deviceState  string
+		expectedCode int
 	}{
-		{"Delete successful", "id", "1", http.StatusNoContent},
-		{"Device not found", "id", "2", http.StatusNotFound},
-		{"Invalid ID", "id", "a", http.StatusInternalServerError},
+		{"Delete successful", "1", "available", http.StatusNoContent},
+		{"Device not found", "2", "available", http.StatusNotFound},
+		{"Device in use", "1", "in-use", http.StatusUnauthorized},
+		{"Invalid ID", "a", "available", http.StatusInternalServerError},
 	}
 	for _, tc := range tt {
 		h := NewHandler(services.NewService(database.NewSQLiteClient()))
-		rawBody, _ := json.Marshal(resources.Device{ID: 1, Brand: "xPhone", State: "available"})
+		rawBody, _ := json.Marshal(resources.Device{ID: 1, Brand: "xPhone", State: tc.deviceState})
 		req, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/api/v1/devices", bytes.NewReader(rawBody))
 		h.RegisterDevice(httptest.NewRecorder(), req)
 
-		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?%s=%s", tc.queryParameter, tc.queryValue)
+		url := fmt.Sprintf("http://localhost:8080/api/v1/devices?id=%s", tc.deviceID)
 		req, _ = http.NewRequest(http.MethodDelete, url, nil)
 		rr := httptest.NewRecorder()
 		h.DeleteDevice(rr, req)
-		assert.Equal(t, tc.expectedCode, rr.Code)
+		assert.Equal(t, tc.expectedCode, rr.Code, tc.name)
 	}
 }
 

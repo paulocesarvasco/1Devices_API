@@ -97,11 +97,19 @@ func (c *sqliteClient) FetchDevicesByState(state string) ([]resources.Device, er
 }
 
 func (c *sqliteClient) RemoveDevice(id int) error {
-	result := c.db.Delete(&resources.Device{}, id)
-	if result.RowsAffected == 0 {
+	var device resources.Device
+	result := c.db.Where("id = ?", id).First(&device)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return constants.ErrorDeviceNotFound
 	}
-	return result.Error
+	if device.State == "in-use" {
+		return constants.ErrorDeviceInUse
+	}
+	deleteResult := c.db.Delete(&device)
+	if deleteResult.Error != nil {
+		return deleteResult.Error
+	}
+	return nil
 }
 
 func (c *sqliteClient) UpdateDevice(currentValues resources.Device, newValues resources.Device) error {
