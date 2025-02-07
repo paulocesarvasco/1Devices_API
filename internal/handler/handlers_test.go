@@ -110,7 +110,7 @@ func TestDeleteDevice(t *testing.T) {
 	tt := []struct {
 		name         string
 		deviceID     string
-		deviceState  string
+		deviceState  resources.State
 		expectedCode int
 	}{
 		{"Delete successful", "1", "available", http.StatusNoContent},
@@ -186,9 +186,9 @@ func TestPatchDevice(t *testing.T) {
 		expectedDevice resources.Device
 	}{
 		{
-			"Update brand", "1", resources.Device{Brand: "Apple"},
+			"Update brand", "1", resources.Device{Brand: "Apple", State: "available"},
 			[]string{"brand"}, []string{"Samsung"}, http.StatusOK,
-			resources.Device{ID: 1, Brand: "Samsung", CreationTime: time.Now().Format(time.RFC3339)},
+			resources.Device{ID: 1, Brand: "Samsung", State: "available", CreationTime: time.Now().Format(time.RFC3339)},
 		},
 		{
 			"Update blocked", "1", resources.Device{Name: "foo", Brand: "Apple", State: "in-use"},

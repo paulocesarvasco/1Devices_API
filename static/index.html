@@ -57,7 +57,7 @@
             border-radius: 5px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
         }
-        input {
+        input, select {
             width: 100%;
             padding: 8px;
             margin-bottom: 10px;
@@ -77,12 +77,20 @@
     <div id="form-container" class="form-container">
         <h3 id="form-title">Register Device</h3>
         <input type="hidden" id="device-id">
+
         <label for="name">Name:</label>
-        <input type="text" id="name">
+        <input type="text" id="name" placeholder="Enter device name" required>
+
         <label for="brand">Brand:</label>
-        <input type="text" id="brand">
+        <input type="text" id="brand" placeholder="Enter brand" required>
+
         <label for="state">State:</label>
-        <input type="text" id="state">
+        <select id="state">
+            <option value="available">Available</option>
+            <option value="in-use">In-Use</option>
+            <option value="inactive">Inactive</option>
+        </select>
+
         <div class="form-actions">
             <button onclick="saveDevice()">Save</button>
             <button onclick="hideForm()">Cancel</button>
@@ -122,7 +130,7 @@
                         <td>${device.state}</td>
                         <td>${device.creation_time}</td>
                         <td>
-                            <button class="btn-edit" onclick="editDevice('${device.id}', '${device.name}', '${device.brand}', '${device.state}')">Edit</button>
+                            <button class="btn-edit" onclick="editDevice('${device.id}')">Edit</button>
                             <button class="btn-delete" onclick="deleteDevice('${device.id}')">Delete</button>
                         </td>
                     `;
@@ -133,11 +141,11 @@
             }
         }
 
-        function showForm(id = "", name = "", brand = "", state = "") {
+        function showForm(id = "") {
             document.getElementById("device-id").value = id;
-            document.getElementById("name").value = name;
-            document.getElementById("brand").value = brand;
-            document.getElementById("state").value = state;
+            document.getElementById("name").value = "";
+            document.getElementById("brand").value = "";
+            document.getElementById("state").value = "available"; // Default state
             document.getElementById("form-title").innerText = id ? "Edit Device" : "Register Device";
             document.getElementById("form-container").style.display = "block";
         }
@@ -157,13 +165,15 @@
                 if (id) {
                     // Update existing device using query parameters
                     const url = new URL(`http://localhost:8080/api/v1/devices?id=${id}`);
-                    url.searchParams.append("name", name);
-                    url.searchParams.append("brand", brand);
-                    url.searchParams.append("state", state);
+                    if (name) url.searchParams.append("name", name);
+                    if (brand) url.searchParams.append("brand", brand);
+                    if (state) url.searchParams.append("state", state);
 
-                    response = await fetch(url, {
-                        method: "PATCH",
-                    });
+                    response = await fetch(url, { method: "PATCH" });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to update device");
+                    }
                 } else {
                     // Create new device with a payload
                     response = await fetch("http://localhost:8080/api/v1/devices", {
@@ -171,19 +181,23 @@
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ name, brand, state }),
                     });
-                }
 
-                if (!response.ok) throw new Error("Failed to save device");
+                    if (!response.ok) {
+                        throw new Error("Failed to create device");
+                    }
+                }
 
                 hideForm();
                 fetchDevices(); // Refresh list
             } catch (error) {
+                alert(error.message); // Show error popup if request fails
                 console.error("Error saving device:", error);
             }
         }
 
-        function editDevice(id, name, brand, state) {
-            showForm(id, name, brand, state);
+        function editDevice(id) {
+            document.getElementById("device-id").value = id;
+            showForm(id);
         }
 
         async function deleteDevice(id) {
